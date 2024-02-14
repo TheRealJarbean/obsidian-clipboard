@@ -25,7 +25,7 @@ export default class ExamplePlugin extends Plugin {
 		this.registerMarkdownPostProcessor((element, context) => {
 			const codeblocks = element.findAll("code");
 
-			for (let codeblock of codeblocks) {
+			for (const codeblock of codeblocks) {
 				const text = codeblock.innerText.trim();
 				console.log("text: " + text);
 				if (text[0] === "+" && text[text.length - 1] === "+") {
