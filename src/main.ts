@@ -1,26 +1,38 @@
 import { error } from "console";
 import { TFile, Plugin, ItemView } from "obsidian";
 import { text } from "stream/consumers";
-import * as config from "./config";
+import * as constants from "./constants";
 import * as utils from "./utils";
+import { SettingsTab } from "./settings";
 
-const GLOBAL_TAGS: Record<string, string> = {
-	"firstName": "Tyler",
+interface ExamplePluginSettings {
+	saveOnClose: boolean;
+}
+  
+const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
+	saveOnClose: true,
 };
 
+let global_tags: Record<string, string>
+let note_tags: Record<string, string>;
+
 export default class ExamplePlugin extends Plugin {
+	settings: ExamplePluginSettings;
 
 	async onload() {
 		console.log('loading plugin');
+
+		await this.loadSettings();
+		this.addSettingTab(new SettingsTab(this.app, this));
 
 		this.addRibbonIcon("clipboard-copy", "Copy Note To Clipboard", async () => {
 			const currentFile: TFile | null = this.app.workspace.getActiveFile();
 
 			if (currentFile) {
 				const fileContents: string = await this.app.vault.cachedRead(currentFile);
-				const currentTags = utils.find_all_unique_tags(fileContents, "`" + config.openDelimiter, config.closeDelimiter + "`");
+				const currentTags = utils.find_all_unique_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`");
 				console.log(currentTags);
-				const clipboardText: string = utils.find_and_replace_all_tags(fileContents, "`" + config.openDelimiter, config.closeDelimiter + "`", GLOBAL_TAGS);
+				const clipboardText: string = utils.find_and_replace_all_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`", global_tags);
 				console.log(clipboardText);
 				navigator.clipboard.writeText(clipboardText);
 			}
@@ -32,11 +44,11 @@ export default class ExamplePlugin extends Plugin {
 			for (const codeblock of codeblocks) {
 				const text = codeblock.innerText.trim();
 				console.log("text: " + text);
-				if (text[0] === config.openDelimiter && text[text.length - 1] === config.closeDelimiter) {
+				if (text[0] === constants.openDelimiter && text[text.length - 1] === constants.closeDelimiter) {
 					const tag = text.substring(1, text.length - 1); // Trim identifiers
-					const tagFound: boolean = GLOBAL_TAGS[tag] !== undefined;
+					const tagFound: boolean = global_tags[tag] !== undefined;
 					const replaceEl = codeblock.createSpan({
-						text: tagFound ? GLOBAL_TAGS[tag] : text,
+						text: tagFound ? global_tags[tag] : text,
 						cls: tagFound ? "tag__success" : "tag__error",
 					});
 					console.log(replaceEl);
@@ -48,5 +60,13 @@ export default class ExamplePlugin extends Plugin {
 
 	async onunload() {
 		console.log('unloading plugin')
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+	
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }
