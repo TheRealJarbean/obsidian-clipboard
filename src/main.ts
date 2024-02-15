@@ -37,8 +37,10 @@ export default class ExamplePlugin extends Plugin {
 			if (currentFile) {
 				const fileContents: string = await this.app.vault.cachedRead(currentFile);
 				const currentTags = utils.find_all_unique_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`");
-				this.saveTags(currentFile);
-				this.saveTags();
+				this.loadTags();
+				this.loadTags(currentFile);
+				console.log(global_tags);
+				console.log(note_tags);
 				const clipboardText: string = utils.find_and_replace_all_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`", global_tags);
 				navigator.clipboard.writeText(clipboardText);
 			}
@@ -101,5 +103,37 @@ export default class ExamplePlugin extends Plugin {
 			tagData[key] = (file) ? note_tags : global_tags;
 			return JSON.stringify(tagData);
 		})
+	}
+
+	/**
+	 * Loads global tags by default.
+	 * Specify a file to load that file's tags.
+	 */
+	async loadTags(file?: TFile) {
+		const { vault } = this.app;
+
+		let key: string;
+		if (file) {
+			key = file.stat.ctime.toString();
+		}
+		else {
+			key = "global";
+		}
+
+		const tagFile = await utils.getTagDataFile(vault);
+		if (tagFile === null) {
+			console.error("Failed to load tags: Tag data file not found.");
+			return;
+		}
+
+		const data = JSON.parse(await vault.cachedRead(tagFile));
+		if (data[key]) {
+			if (file) {
+				note_tags = data[key];
+			}
+			else {
+				global_tags = data[key];
+			}
+		}
 	}
 }
