@@ -1,5 +1,5 @@
-# npm run build output file
-main.js
+# VSCode configuration files
+.vscode
 
 # Logs
 logs
