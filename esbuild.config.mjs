@@ -43,10 +43,10 @@ const context = await esbuild.context({
 	outfile: "dist/main.js",
 	plugins: [
 		esbuildSvelte({
-			compilerOptions: { css: true },
+			compilerOptions: { css: "injected" },
 			preprocess: sveltePreprocess(),
 		}),
-	  ]
+	]
 });
 
 if (prod) {
