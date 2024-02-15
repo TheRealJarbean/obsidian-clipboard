@@ -66,3 +66,55 @@ export async function getTagDataFile(vault: Vault): Promise<TFile | null> {
 export async function createTagDataFile(vault: Vault): Promise<TFile> {
 	return await vault.create("clipboard-tag-data.json", "{}");
 }
+
+/**
+ * Loads global tags by default.
+ * Specify a file to load that file's tags.
+ */
+export async function loadTags(vault: Vault, file?: TFile): Promise<Record<string, string | null>> {
+	let key: string;
+	if (file) {
+		key = file.stat.ctime.toString();
+	}
+	else {
+		key = "global";
+	}
+
+	const tagFile = await getTagDataFile(vault);
+	if (tagFile === null) {
+		console.error("Failed to load tags: Tag data file not found.");
+		return {};
+	}
+
+	const data = JSON.parse(await vault.cachedRead(tagFile));
+	if (data[key]) {
+		return data[key] as Record<string, string>;
+	}
+	
+	return {};
+}
+
+/**
+ * Saves global tags by default.
+ * Specify a file to save that file's tags.
+ */
+export async function saveTags(vault: Vault, tags: Record<string, string | null>, file?: TFile) {
+	let key: string;
+	if (file) {
+		key = file.stat.ctime.toString();
+	}
+	else {
+		key = "global";
+	}
+
+	let tagFile = await getTagDataFile(vault);
+	if (tagFile === null) {
+		tagFile = await createTagDataFile(vault);
+	}
+
+	vault.process(tagFile, (data) => {
+		const tagData = JSON.parse(data);
+		tagData[key] = tags;
+		return JSON.stringify(tagData);
+	})
+}

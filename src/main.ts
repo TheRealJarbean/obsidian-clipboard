@@ -14,14 +14,8 @@ const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
 	saveOnClose: true,
 };
 
-let global_tags: Record<string, string | null> = {
-	"global1": "globaltag",
-	"global2": "otherglobaltag",
-};
-let note_tags: Record<string, string | null> = {
-	"firstName": "Tyler",
-	"secondName": "Jaron",
-};
+let global_tags: Record<string, string | null>;
+let note_tags: Record<string, string | null>;
 
 const VIEW_TYPE = "sve-view";
 var TAG_COUNT = 0;
@@ -63,6 +57,8 @@ export default class ExamplePlugin extends Plugin {
 	async onload() {
 		console.log('loading plugin');
 
+		const { vault } = this.app;
+
 		await this.loadSettings();
 		this.addSettingTab(new SettingsTab(this.app, this));
 
@@ -84,8 +80,8 @@ export default class ExamplePlugin extends Plugin {
 			if (currentFile) {
 				const fileContents: string = await this.app.vault.cachedRead(currentFile);
 				const currentTags = utils.find_all_unique_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`");
-				this.loadTags();
-				this.loadTags(currentFile);
+				global_tags = await utils.loadTags(vault);
+				note_tags = await utils.loadTags(vault, currentFile);
 				console.log(global_tags);
 				console.log(note_tags);
 				const clipboardText: string = utils.find_and_replace_all_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`", global_tags);
@@ -135,65 +131,6 @@ export default class ExamplePlugin extends Plugin {
 	
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-
-	/**
-	 * Saves global tags by default.
-	 * Specify a file to save that file's tags.
-	 */
-	async saveTags(file?: TFile) {
-		const { vault } = this.app;
-
-		let key: string;
-		if (file) {
-			key = file.stat.ctime.toString();
-		}
-		else {
-			key = "global";
-		}
-
-		let tagFile = await utils.getTagDataFile(vault);
-		if (tagFile === null) {
-			tagFile = await utils.createTagDataFile(vault);
-		}
-
-		vault.process(tagFile, (data) => {
-			const tagData = JSON.parse(data);
-			tagData[key] = (file) ? note_tags : global_tags;
-			return JSON.stringify(tagData);
-		})
-	}
-
-	/**
-	 * Loads global tags by default.
-	 * Specify a file to load that file's tags.
-	 */
-	async loadTags(file?: TFile) {
-		const { vault } = this.app;
-
-		let key: string;
-		if (file) {
-			key = file.stat.ctime.toString();
-		}
-		else {
-			key = "global";
-		}
-
-		const tagFile = await utils.getTagDataFile(vault);
-		if (tagFile === null) {
-			console.error("Failed to load tags: Tag data file not found.");
-			return;
-		}
-
-		const data = JSON.parse(await vault.cachedRead(tagFile));
-		if (data[key]) {
-			if (file) {
-				note_tags = data[key];
-			}
-			else {
-				global_tags = data[key];
-			}
-		}
 	}
 
 	async activateView() {
