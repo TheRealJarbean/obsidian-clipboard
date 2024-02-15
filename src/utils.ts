@@ -1,3 +1,5 @@
+import { Vault, TFile, TFolder} from "obsidian";
+
 export function find_all_unique_tags(
 	text:string,
 	openDelimiter: string,
@@ -24,7 +26,7 @@ export function find_and_replace_all_tags(
 	text: string, 
 	openDelimiter: string, 
 	closeDelimiter: string, 
-	tags: Record<string, string>,
+	tags: Record<string, string | null>,
 	): string
 {
 	const openIndex: number = text.indexOf(openDelimiter);
@@ -36,7 +38,7 @@ export function find_and_replace_all_tags(
 	}
 
 	const tag = text.substring(openIndex + openDelimiter.length, closeIndex);
-	const tagFound: boolean = tags[tag] !== undefined;
+	const tagFound: boolean = tags[tag] !== null && tags[tag] != undefined;
 
 	// Remove delimiters and return text with next tag replaced
 	const unchangedText = text.substring(0, openIndex);
@@ -46,6 +48,21 @@ export function find_and_replace_all_tags(
 	const remainingText = reachedEndOfText ? "" : text.substring(closeIndex + closeDelimiter.length);
 
 	const returnText = unchangedText + newText + remainingText;
-	console.log(returnText);
 	return find_and_replace_all_tags(returnText, openDelimiter, closeDelimiter, tags);
+}
+
+export async function getTagDataFile(vault: Vault): Promise<TFile | null> {
+	const tagFile = vault.getAbstractFileByPath("clipboard-tag-data.json");
+	if (tagFile === null) {
+		return null;
+	}
+	if (tagFile instanceof TFolder) {
+		console.error("You named a folder 'clipboard-tag-data.json' or clipboard-tag-data.json was not found or created.");
+		return null;
+	}
+	return tagFile as TFile;
+}
+
+export async function createTagDataFile(vault: Vault): Promise<TFile> {
+	return await vault.create("clipboard-tag-data.json", "{}");
 }
