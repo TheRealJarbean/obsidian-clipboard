@@ -54,7 +54,7 @@ export default class ExamplePlugin extends Plugin {
 				console.log("text: " + text);
 				if (text[0] === constants.openDelimiter && text[text.length - 1] === constants.closeDelimiter) {
 					const tag = text.substring(1, text.length - 1); // Trim identifiers
-					const tagFound: boolean = global_tags[tag] !== null;
+					const tagFound: boolean = global_tags[tag] !== null && global_tags[tag] !== undefined;
 					const replaceEl = codeblock.createSpan({
 						text: tagFound ? global_tags[tag]! : text,
 						cls: tagFound ? "tag__success" : "tag__error",
