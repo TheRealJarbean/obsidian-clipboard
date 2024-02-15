@@ -91,10 +91,9 @@ export default class ExamplePlugin extends Plugin {
 			key = "global";
 		}
 
-		const tagFile = await utils.getTagDataFileOrCreate(vault);
+		let tagFile = await utils.getTagDataFile(vault);
 		if (tagFile === null) {
-			console.error("Failed to save tags: tag data file not found.");
-			return;
+			tagFile = await utils.createTagDataFile(vault);
 		}
 
 		vault.process(tagFile, (data) => {

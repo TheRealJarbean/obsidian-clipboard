@@ -51,14 +51,18 @@ export function find_and_replace_all_tags(
 	return find_and_replace_all_tags(returnText, openDelimiter, closeDelimiter, tags);
 }
 
-export async function getTagDataFileOrCreate(vault: Vault): Promise<TFile | null> {
-	let tagFile = vault.getAbstractFileByPath("clipboard-tag-data.json");
+export async function getTagDataFile(vault: Vault): Promise<TFile | null> {
+	const tagFile = vault.getAbstractFileByPath("clipboard-tag-data.json");
 	if (tagFile === null) {
-		tagFile = await vault.create("clipboard-tag-data.json", "{}");
+		return null;
 	}
 	if (tagFile instanceof TFolder) {
 		console.error("You named a folder 'clipboard-tag-data.json' or clipboard-tag-data.json was not found or created.");
 		return null;
 	}
 	return tagFile as TFile;
+}
+
+export async function createTagDataFile(vault: Vault): Promise<TFile> {
+	return await vault.create("clipboard-tag-data.json", "{}");
 }
