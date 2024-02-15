@@ -1,9 +1,10 @@
 import { error } from "console";
-import { TFile, TFolder, Plugin, ItemView, TAbstractFile } from "obsidian";
+import { ItemView, TFile, TFolder, Plugin, WorkspaceLeaf, TAbstractFile } from "obsidian";
 import { text } from "stream/consumers";
 import * as constants from "./constants";
 import * as utils from "./utils";
 import { SettingsTab } from "./settings";
+import Component from "./ui/Component.svelte";
 
 interface ExamplePluginSettings {
 	saveOnClose: boolean;
@@ -22,6 +23,40 @@ let note_tags: Record<string, string | null> = {
 	"secondName": "Jaron",
 };
 
+const VIEW_TYPE = "sve-view";
+var TAG_COUNT = 0;
+
+class SVEView extends ItemView {
+	component: Component;
+
+    constructor(leaf: WorkspaceLeaf) {
+        super(leaf);
+    }
+
+    getViewType() {
+        return VIEW_TYPE;
+    }
+
+    getDisplayText() {
+        return "Clipboard";
+    }
+
+	getIcon() {
+		return "clipboard";
+	}
+
+    async onOpen() {
+		this.component = new Component({
+			target: this.contentEl, props: {globalTags: {}, localTags: {}}
+		});
+    }
+
+    async onClose() {
+    }
+}
+
+
+
 export default class ExamplePlugin extends Plugin {
 	settings: ExamplePluginSettings;
 
@@ -30,6 +65,18 @@ export default class ExamplePlugin extends Plugin {
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingsTab(this.app, this));
+
+		this.registerEvent(this.app.workspace.on('file-open', async (file) => {
+			const leafList = this.app.workspace.getLeavesOfType(VIEW_TYPE);
+			if (leafList.length > 0) {
+				this.activateView();
+			}
+		}));
+
+		this.registerView(VIEW_TYPE, (leaf) => new SVEView(leaf));
+		this.addRibbonIcon("replace", "Open Snippet Variable Editor", () => {
+			this.activateView();
+		});
 
 		this.addRibbonIcon("clipboard-copy", "Copy Note To Clipboard", async () => {
 			const currentFile: TFile | null = this.app.workspace.getActiveFile();
@@ -146,6 +193,24 @@ export default class ExamplePlugin extends Plugin {
 			else {
 				global_tags = data[key];
 			}
+		}
+	}
+
+	async activateView() {
+		const { workspace } = this.app;
+		workspace.getActiveFile
+		let leaf: WorkspaceLeaf | null = null;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE);
+
+		if (leaves.length > 0) {
+			workspace.detachLeavesOfType(VIEW_TYPE);
+			leaf = workspace.getLeftLeaf(false);
+			await leaf.setViewState({ type: VIEW_TYPE, active: false});
+		}
+		else {
+			leaf = workspace.getLeftLeaf(false);
+			await leaf.setViewState({ type: VIEW_TYPE, active: true});
+			workspace.revealLeaf(leaf);
 		}
 	}
 }
