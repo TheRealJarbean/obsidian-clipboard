@@ -80,7 +80,7 @@ export default class ExamplePlugin extends Plugin {
 	 * Saves global tags by default.
 	 * Specify a file to save that file's tags.
 	 */
-	async saveTags(file?: TFile | undefined) {
+	async saveTags(file?: TFile) {
 		const { vault } = this.app;
 
 		let key: string;
