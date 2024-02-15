@@ -1,5 +1,5 @@
 import { error } from "console";
-import { TFile, Plugin, ItemView } from "obsidian";
+import { TFile, TFolder, Plugin, ItemView, TAbstractFile } from "obsidian";
 import { text } from "stream/consumers";
 import * as constants from "./constants";
 import * as utils from "./utils";
@@ -13,8 +13,14 @@ const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
 	saveOnClose: true,
 };
 
-let global_tags: Record<string, string>
-let note_tags: Record<string, string>;
+let global_tags: Record<string, string | null> = {
+	"global1": "globaltag",
+	"global2": "otherglobaltag",
+};
+let note_tags: Record<string, string | null> = {
+	"firstName": "Tyler",
+	"secondName": "Jaron",
+};
 
 export default class ExamplePlugin extends Plugin {
 	settings: ExamplePluginSettings;
@@ -31,9 +37,9 @@ export default class ExamplePlugin extends Plugin {
 			if (currentFile) {
 				const fileContents: string = await this.app.vault.cachedRead(currentFile);
 				const currentTags = utils.find_all_unique_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`");
-				console.log(currentTags);
+				this.saveTags(currentFile);
+				this.saveTags();
 				const clipboardText: string = utils.find_and_replace_all_tags(fileContents, "`" + constants.openDelimiter, constants.closeDelimiter + "`", global_tags);
-				console.log(clipboardText);
 				navigator.clipboard.writeText(clipboardText);
 			}
 		});
@@ -46,9 +52,9 @@ export default class ExamplePlugin extends Plugin {
 				console.log("text: " + text);
 				if (text[0] === constants.openDelimiter && text[text.length - 1] === constants.closeDelimiter) {
 					const tag = text.substring(1, text.length - 1); // Trim identifiers
-					const tagFound: boolean = global_tags[tag] !== undefined;
+					const tagFound: boolean = global_tags[tag] !== null;
 					const replaceEl = codeblock.createSpan({
-						text: tagFound ? global_tags[tag] : text,
+						text: tagFound ? global_tags[tag]! : text,
 						cls: tagFound ? "tag__success" : "tag__error",
 					});
 					console.log(replaceEl);
@@ -68,5 +74,33 @@ export default class ExamplePlugin extends Plugin {
 	
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	/**
+	 * Saves global tags by default.
+	 * Specify a file to save that file's tags.
+	 */
+	async saveTags(file?: TFile | undefined) {
+		const { vault } = this.app;
+
+		let key: string;
+		if (file) {
+			key = file.stat.ctime.toString();
+		}
+		else {
+			key = "global";
+		}
+
+		const tagFile = await utils.getTagDataFileOrCreate(vault);
+		if (tagFile === null) {
+			console.error("Failed to save tags: tag data file not found.");
+			return;
+		}
+
+		vault.process(tagFile, (data) => {
+			const tagData = JSON.parse(data);
+			tagData[key] = (file) ? note_tags : global_tags;
+			return JSON.stringify(tagData);
+		})
 	}
 }
