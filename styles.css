@@ -1,1 +1,7 @@
+.tag__error {
+	color: var(--text-error);
+}
 
+.tag__success {
+	color: var(--text-success);
+}
