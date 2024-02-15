@@ -54,9 +54,21 @@ export default class ExamplePlugin extends Plugin {
 				console.log("text: " + text);
 				if (text[0] === constants.openDelimiter && text[text.length - 1] === constants.closeDelimiter) {
 					const tag = text.substring(1, text.length - 1); // Trim identifiers
-					const tagFound: boolean = global_tags[tag] !== null && global_tags[tag] !== undefined;
+
+					// Check for tag in global and note tags.
+					// Global takes precedence over note tags;
+					// if global value is null, it is treated as null.
+					let value: string | null = null;
+					if (global_tags[tag]) {
+						value = global_tags[tag];
+					}
+					else if (note_tags[tag]) {
+						value = note_tags[tag];
+					}
+
+					const tagFound: boolean = value !== null;
 					const replaceEl = codeblock.createSpan({
-						text: tagFound ? global_tags[tag]! : text,
+						text: tagFound ? value! : text,
 						cls: tagFound ? "tag__success" : "tag__error",
 					});
 					console.log(replaceEl);
