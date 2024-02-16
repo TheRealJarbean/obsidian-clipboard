@@ -1,13 +1,4 @@
-import { error } from "console";
-import {
-	ItemView,
-	TFile,
-	TFolder,
-	Plugin,
-	WorkspaceLeaf,
-	TAbstractFile,
-} from "obsidian";
-import { text } from "stream/consumers";
+import { ItemView, TFile, Plugin, WorkspaceLeaf } from "obsidian";
 import * as constants from "./constants";
 import * as utils from "./utils";
 import { SettingsTab } from "./settings";
@@ -25,7 +16,6 @@ let global_tags: Record<string, string | null>;
 let note_tags: Record<string, string | null>;
 
 const VIEW_TYPE = "sve-view";
-var TAG_COUNT = 0;
 
 class SVEView extends ItemView {
 	component: Component;

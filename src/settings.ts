@@ -1,6 +1,6 @@
 import ExamplePlugin from "./main";
 import * as constants from "./constants";
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: ExamplePlugin;
