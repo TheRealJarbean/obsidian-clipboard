@@ -1,12 +1,14 @@
 <script lang="ts">
-    export let localTags:Record<string, string | null>;
+    import {localStore} from "../store";
 </script>
 
 <div class="Container">
-    {#each Object.keys(localTags) as entry}
+    {#each Object.keys($localStore) as entry}
         <div class="entry">
             <p class="Title"> {entry} </p>
-            <input class="Replacement" value={localTags[entry] || ""}/>
+            {#if $localStore[entry]}
+                <input class="Replacement" bind:value={$localStore[entry]}/>
+            {/if}
         </div>
     {/each}
 </div>    

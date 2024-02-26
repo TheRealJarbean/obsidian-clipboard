@@ -6,11 +6,7 @@
 
     let windowWidth:number = 1;
 
-    export let globalTags:Record<string, string | null>;
-    export let localTags:Record<string, string | null>;
-
     const handleClick = (tabValue: number) => () => (activeTabValue = tabValue);
-
 
 </script>
 
@@ -39,13 +35,13 @@
 
 {#if activeTabValue == 1}
 <div class="box">
-    <Local {localTags}/>
+    <Local/>
 </div>
 {/if}
 
 {#if activeTabValue == 2}
 <div class="box">
-    <Global {globalTags}/>
+    <Global/>
 </div>
 {/if}
 

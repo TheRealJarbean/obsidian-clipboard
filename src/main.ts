@@ -3,6 +3,8 @@ import * as constants from "./constants";
 import * as utils from "./utils";
 import { SettingsTab } from "./settings";
 import Component from "./ui/Component.svelte";
+import { globalStore, localStore } from "./store";
+import { get } from "svelte/store";
 
 interface ExamplePluginSettings {
 	saveOnClose: boolean;
@@ -12,8 +14,13 @@ const DEFAULT_SETTINGS: Partial<ExamplePluginSettings> = {
 	saveOnClose: true,
 };
 
-let global_tags: Record<string, string | null>;
-let note_tags: Record<string, string | null>;
+globalStore.subscribe((value) => {
+	console.log(value);
+});
+
+localStore.subscribe((value) => {
+	console.log(value);
+});
 
 const VIEW_TYPE = "sve-view";
 
@@ -39,7 +46,6 @@ class SVEView extends ItemView {
 	async onOpen() {
 		this.component = new Component({
 			target: this.contentEl,
-			props: { globalTags: {}, localTags: {} },
 		});
 	}
 
@@ -53,6 +59,8 @@ export default class ExamplePlugin extends Plugin {
 		console.log("loading plugin");
 
 		const { vault } = this.app;
+
+		//globalStore.set(await utils.loadTags(vault));
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingsTab(this.app, this));
@@ -86,16 +94,17 @@ export default class ExamplePlugin extends Plugin {
 						"`" + constants.openDelimiter,
 						constants.closeDelimiter + "`",
 					);
-					global_tags = await utils.loadTags(vault);
+					/*global_tags = await utils.loadTags(vault);
 					note_tags = await utils.loadTags(vault, currentFile);
 					console.log(global_tags);
 					console.log(note_tags);
+					*/
 					const clipboardText: string =
 						utils.find_and_replace_all_tags(
 							fileContents,
 							"`" + constants.openDelimiter,
 							constants.closeDelimiter + "`",
-							global_tags,
+							get(globalStore),
 						);
 					navigator.clipboard.writeText(clipboardText);
 				}
@@ -118,10 +127,10 @@ export default class ExamplePlugin extends Plugin {
 					// Global takes precedence over note tags;
 					// if global value is null, it is treated as null.
 					let value: string | null = null;
-					if (global_tags[tag]) {
-						value = global_tags[tag];
-					} else if (note_tags[tag]) {
-						value = note_tags[tag];
+					if (get(globalStore)[tag]) {
+						value = get(globalStore)[tag];
+					} else if (get(localStore)[tag]) {
+						value = get(localStore)[tag];
 					}
 
 					const tagFound: boolean = value !== null;
